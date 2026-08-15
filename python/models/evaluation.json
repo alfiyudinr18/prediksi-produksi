@@ -1,0 +1,82 @@
+{
+    "jumlah_data": 421,
+    "data_training": 336,
+    "data_testing": 85,
+    "tepat_waktu": 328,
+    "terlambat": 93,
+    "training_accuracy": 93.45,
+    "testing_accuracy": 91.76,
+    "precision": 80.0,
+    "recall": 84.21,
+    "f1_score": 82.05,
+    "confusion_matrix": [
+        [
+            62,
+            4
+        ],
+        [
+            3,
+            16
+        ]
+    ],
+    "overfitting": 1.69,
+    "cv_accuracy": [
+        94.12,
+        90.48,
+        94.05,
+        85.71,
+        89.29
+    ],
+    "cv_accuracy_mean": 90.73,
+    "auc": 97.13,
+    "specificity": 93.94,
+    "per_kelas": {
+        "Tepat Waktu": {
+            "precision": 95.38,
+            "recall": 93.94,
+            "f1_score": 94.66,
+            "support": 66
+        },
+        "Terlambat": {
+            "precision": 80.0,
+            "recall": 84.21,
+            "f1_score": 82.05,
+            "support": 19
+        }
+    },
+    "macro_avg": {
+        "precision": 87.69,
+        "recall": 89.07,
+        "f1_score": 88.35,
+        "support": 85
+    },
+    "weighted_avg": {
+        "precision": 91.95,
+        "recall": 91.76,
+        "f1_score": 91.84,
+        "support": 85
+    },
+    "parameter": {
+        "n_estimators": 500,
+        "criterion": "gini",
+        "max_depth": 7,
+        "min_samples_leaf": 5,
+        "min_samples_split": 10,
+        "class_weight": "balanced_subsample",
+        "random_state": 42,
+        "test_size": "20%"
+    },
+    "waktu_training": "15-08-2026 17:02:10",
+    "feature_importance": {
+        "qty": 0.5241,
+        "bobot_kesusahan": 0.1109,
+        "jumlah_pekerja": 0.2378,
+        "durasi_target": 0.1272
+    },
+    "fitur": [
+        "qty",
+        "bobot_kesusahan",
+        "jumlah_pekerja",
+        "durasi_target"
+    ]
+}
