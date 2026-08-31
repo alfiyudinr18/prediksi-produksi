@@ -165,13 +165,13 @@
                 </p>
             </div>
 
-            <div class="ml-auto flex items-center gap-4">
+            {{-- <div class="ml-auto flex items-center gap-4">
                 <span class="hidden md:inline text-sm text-slate-500">
                     {{ now()->translatedFormat('l, d F Y') }}
                 </span>
                 <div class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center
                             justify-center font-semibold text-sm">A</div>
-            </div>
+            </div> --}}
         </div>
     </header>
 

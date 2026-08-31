@@ -28,7 +28,7 @@
         89.29
     ],
     "cv_accuracy_mean": 90.73,
-    "auc": 97.13,
+    "auc": 97.29,
     "specificity": 93.94,
     "per_kelas": {
         "Tepat Waktu": {
@@ -66,12 +66,12 @@
         "random_state": 42,
         "test_size": "20%"
     },
-    "waktu_training": "15-08-2026 17:02:10",
+    "waktu_training": "28-08-2026 07:39:26",
     "feature_importance": {
         "qty": 0.5241,
-        "bobot_kesusahan": 0.1109,
-        "jumlah_pekerja": 0.2378,
-        "durasi_target": 0.1272
+        "bobot_kesusahan": 0.1103,
+        "jumlah_pekerja": 0.2372,
+        "durasi_target": 0.1284
     },
     "fitur": [
         "qty",

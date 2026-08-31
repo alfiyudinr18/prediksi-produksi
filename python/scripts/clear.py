@@ -1,110 +1,273 @@
 import os
+import re
 import pandas as pd
-import re # Tambahkan library Regex untuk pencarian kata akurat
 
 # ==========================================
-# FUNGSI KATEGORISASI BARANG (DISEMPURNAKAN)
+# FUNGSI KATEGORISASI BARANG
 # ==========================================
 def kategorikan_barang(deskripsi):
-    teks = str(deskripsi).lower()
+    teks = str(deskripsi).lower().strip()
 
-    # 1. Kategori Aksesoris / Non-Baju (Prioritas dibuang ke Lain-lain)
-    if any(k in teks for k in ['topi']): return 'Topi'
-    if any(k in teks for k in ['tas', 'totebag', 'goodie']): return 'Tas & Aksesoris'
-    if any(k in teks for k in ['cover', 'boneka', 'dtf', 'pasang', 'kain', 'koper']): return 'Lain-lain'
+    if any(k in teks for k in ['stel', 'stelan', 'seragam']):
+        if any(k in teks for k in ['olahraga', 'training', 'sport']):
+            return 'Setelan Training'
+        return 'Seragam & Setelan'
 
-    # 2. Celana & Setelan (Beban kerja paling berat, harus ditaruh paling atas)
-    if any(k in teks for k in ['setelan', 'set', 'training', 'traning', 'celana']):
-        return 'Celana & Setelan'
+    if any(k in teks for k in ['jaket', 'jacket', 'hoodie', 'bomber',
+                                 'sweater', 'almamater', 'varsity']):
+        return 'Jaket & Hoodie'
 
-    # 3. Jaket, Jas & Almamater
-    if any(k in teks for k in ['jaket', 'jacket', 'bomber', 'sweater', 'hoodie', 'varsity', 'almamater', 'jas']):
-        return 'Jaket & Jas'
+    if any(k in teks for k in ['celana', 'rok', 'trouser', 'pants']):
+        return 'Celana & Rok'
 
-    # 4. Wearpack (Baju Montir/Lapangan)
-    if any(k in teks for k in ['wearpack', 'warepack', 'wearepack']):
-        return 'Wearpack'
+    if any(k in teks for k in ['kemeja', 'hem', 'pdl', 'pdh', 'batik']):
+        return 'Kemeja Tangan Panjang' if 'panjang' in teks else 'Kemeja Tangan Pendek'
 
-    # 5. Seragam
-    if 'seragam' in teks:
-        # Pisahkan seragam sekolah dan seragam kerja
-        if any(k in teks for k in ['sd', 'smp', 'sma', 'smk', 'tk', 'paud', 'sekolah', 'pramuka']):
-            return 'Seragam Sekolah'
-        else:
-            return 'Seragam Kerja / Instansi'
+    if any(k in teks for k in ['wangky', 'wangki', 'wanky', 'polo', 'poloshirt']):
+        return 'Wangky Tangan Panjang' if 'panjang' in teks else 'Wangky Tangan Pendek'
 
-    # 6. Kemeja (Baju Formal Berkerah Kancing Penuh)
-    if any(k in teks for k in ['kemeja', 'hem', 'pdl', 'pdh']):
-        return 'Kemeja'
-
-    # 7. Rompi
     if any(k in teks for k in ['rompi', 'vest']):
         return 'Rompi'
 
-    # 8. Kaos Berkerah (Wangky / Polo)
-    # Gunakan re.search('\bpolo\b') agar kata 'polos' tidak terbaca sebagai 'polo'
-    if any(k in teks for k in ['wangky', 'wangki', 'wanky', 'wangkt', 'ploshirt', 'poloshirt']) or re.search(r'\bpolo\b', teks):
-        return 'Kaos Wangky'
+    if any(k in teks for k in ['wearpack', 'warepack', 'wearepack']):
+        return 'Wearpack'
 
-    # 9. Kaos Lengan Panjang
-    if 'panjang' in teks and any(k in teks for k in ['kaos', 'kaso', 'tangan', 'tshirt']):
-        return 'Kaos Lengan Panjang'
+    if 'panjang' in teks and any(k in teks for k in ['kaos', 'kaso', 'tangan',
+                                                       'tshirt', 'koko', 'kurta']):
+        return 'Kaos Tangan Panjang'
 
-    # 10. Kaos Oblong (T-Shirt, Jersey, dll)
-    # Masukkan berbagai macam typo kaos di sini
-    if any(k in teks for k in ['oblong', 't-shirt', 'tshirt', 't shirt', 'thsirt', 'kaos', 'kaso', 'jersey', 'jersy', 'raglan']):
+    if any(k in teks for k in ['kaos', 'kaso', 'oblong', 'tshirt', 't-shirt',
+                                 't shirt', 'jersey', 'raglan', 'koko', 'kurta']):
         return 'Kaos Oblong'
 
-    # Jika lolos dari semua filter di atas
+    if any(k in teks for k in ['topi', 'tas', 'totebag', 'goodie']):
+        return 'Aksesoris'
+
     return 'Lain-lain'
+
+
+# ==========================================
+# FORMAT NO PO  →  PO-YYYYMM-NNNN
+# ==========================================
+def format_no_po(no_raw, tanggal):
+    try:
+        nomor = int(float(str(no_raw).strip()))
+    except Exception:
+        match = re.search(r'\d+', str(no_raw))
+        nomor = int(match.group()) if match else 0
+
+    try:
+        tgl   = pd.to_datetime(tanggal)
+        prefix = tgl.strftime('%Y%m')
+    except Exception:
+        prefix = '000000'
+
+    return f"PO-{prefix}-{nomor:04d}"
+
+
+# ==========================================
+# PARSE STATUS  →  0 = Tepat Waktu
+#                  1 = Terlambat
+# ==========================================
+def parse_status(val):
+    v = str(val).strip().upper()
+    # TRUE / 1  = TIDAK terlambat  → label 0
+    if v in ('TRUE', '1', 'YES', 'TEPAT WAKTU', 'ON TIME', 'TIDAK'):
+        return 0
+    # FALSE / 0 = TERLAMBAT        → label 1
+    if v in ('FALSE', '0', 'NO', 'TERLAMBAT', 'LATE', 'YA'):
+        return 1
+    return 0   # default aman
+
 
 # ==========================================
 # PROSES UTAMA
 # ==========================================
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-os.makedirs(DATA_DIR, exist_ok=True)
+def main():
+    BASE_DIR    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    DATA_DIR    = os.path.join(BASE_DIR, 'data')
+    os.makedirs(DATA_DIR, exist_ok=True)
 
-file_path = os.path.join(DATA_DIR, 'skripsi2.xlsx')
-print(f"Membaca data dari: {file_path}...")
-df = pd.read_excel(file_path)
+    INPUT_FILE  = os.path.join(DATA_DIR, 'skripsi.xlsx')
+    OUTPUT_FILE = os.path.join(DATA_DIR, 'Dataset_Produksi_Bersih.xlsx')
 
-cols_to_ffill = ['NO', 'TGL PO', 'DATE LINE', 'DESCRIPTION']
-df[cols_to_ffill] = df[cols_to_ffill].ffill()
+    print("=" * 60)
+    print("MEMULAI PREPROCESSING DATA PRODUKSI GARMEN")
+    print("=" * 60)
+    print(f"\nMembaca: {INPUT_FILE}")
 
-df_clean = df.groupby('NO').agg({
-    'TGL PO': 'first',
-    'DATE LINE': 'first',
-    'DESCRIPTION': 'first',
-    'QTY': 'sum'
-}).reset_index()
+    # --------------------------------------------------
+    # STEP 1 - Baca & deteksi otomatis struktur Excel
+    # --------------------------------------------------
+    df_peek = pd.read_excel(INPUT_FILE, header=None, nrows=3)
 
-df_clean['TGL PO'] = pd.to_datetime(df_clean['TGL PO'], errors='coerce')
-df_clean['DATE LINE'] = pd.to_datetime(df_clean['DATE LINE'], errors='coerce')
-df_clean['Durasi Target (Hari)'] = (df_clean['DATE LINE'] - df_clean['TGL PO']).dt.days
+    # Cek apakah baris ke-1 (index 1) adalah sub-header teks
+    # (misal "BAHAN", "WARNA", dll.) → kalau iya, skip baris tsb
+    baris1 = df_peek.iloc[1].astype(str).str.strip().str.lower().tolist()
+    ada_subheader = any(b in ('bahan', 'warna', 'nan', '') for b in baris1[:5])
 
-# TERAPKAN KATEGORISASI KE KOLOM DESCRIPTION
-df_clean['Kategori_Barang'] = df_clean['DESCRIPTION'].apply(kategorikan_barang)
+    if ada_subheader:
+        print("   >> Terdeteksi sub-header di baris ke-2, akan di-skip.")
+        df_raw = pd.read_excel(INPUT_FILE, header=0, skiprows=[1])
+    else:
+        df_raw = pd.read_excel(INPUT_FILE, header=0)
 
-df_clean['Pekerja'] = ""
-df_clean['Mesin_Aktif'] = ""
-df_clean['Label_Keterlambatan'] = ""
+    print(f"   Baris awal : {len(df_raw)}")
+    print(f"   Kolom      : {df_raw.columns.tolist()}")
 
-df_clean.rename(columns={
-    'NO': 'ID_Pesanan',
-    'TGL PO': 'Tanggal_PO',
-    'DATE LINE': 'Date_Line',
-    'DESCRIPTION': 'Deskripsi_Asli',
-    'QTY': 'Total QTY'
-}, inplace=True)
+    df = df_raw.copy()
 
-df_final = df_clean[[
-    'ID_Pesanan', 'Tanggal_PO', 'Date_Line', 'Deskripsi_Asli',
-    'Kategori_Barang', 'Total QTY', 'Durasi Target (Hari)',
-    'Pekerja', 'Mesin_Aktif', 'Label_Keterlambatan'
-]]
+    # --------------------------------------------------
+    # STEP 2 - Normalisasi nama kolom
+    # Mendukung dua format:
+    #   Format A (skripsi.xlsx) : NO, SPK, TGL PO, DATE LINE,
+    #                              NAMA, DESCRIPTION, NAMA TOKO,
+    #                              SIZE, QTY, SAT, PRICE,
+    #                              FINISHING, PEKERJA, STATUS
+    #   Format B (dataskrps.xlsx): NO PO, TANGGAL ORDER,
+    #                              KETERANGAN BARANG, WARNA, QTY,
+    #                              PEKERJA, ..., TARGET SELESAI,
+    #                              TGL SELESAI, TERLAMBAT
+    # --------------------------------------------------
+    KOLOM_MAP = {
+        # Format A → nama standar
+        'NO'               : 'NO_ID',
+        'TGL PO'           : 'TGL_ORDER',
+        'DATE LINE'        : 'TGL_TARGET',
+        'DESCRIPTION'      : 'DESKRIPSI',
+        'QTY'              : 'QTY',
+        'PEKERJA'          : 'PEKERJA',
+        'STATUS'           : 'STATUS_RAW',
+        # Format B → nama standar
+        'NO PO'            : 'NO_ID',
+        'TANGGAL ORDER'    : 'TGL_ORDER',
+        'TARGET SELESAI'   : 'TGL_TARGET',
+        'KETERANGAN BARANG': 'DESKRIPSI',
+        'TERLAMBAT'        : 'STATUS_RAW',
+        'WARNA'            : 'WARNA',
+    }
+    df.rename(columns={k: v for k, v in KOLOM_MAP.items() if k in df.columns},
+              inplace=True)
 
-output_name = os.path.join(DATA_DIR, 'Dataset_Siap_RF.xlsx')
-df_final.to_excel(output_name, index=False)
+    # Pastikan kolom wajib tersedia
+    wajib = ['NO_ID', 'TGL_ORDER', 'TGL_TARGET', 'DESKRIPSI', 'QTY', 'PEKERJA', 'STATUS_RAW']
+    hilang = [c for c in wajib if c not in df.columns]
+    if hilang:
+        print(f"\n[ERROR] Kolom berikut tidak ditemukan: {hilang}")
+        print("Kolom yang tersedia:", df.columns.tolist())
+        raise KeyError(f"Kolom tidak ditemukan: {hilang}")
 
-print(f"✅ Data berhasil dibersihkan dan dikategorikan!\nFile tersimpan di: {output_name}")
+    # --------------------------------------------------
+    # STEP 3 - Forward fill kolom utama
+    # (1 pesanan bisa punya banyak baris ukuran)
+    # --------------------------------------------------
+    ff_cols = ['NO_ID', 'TGL_ORDER', 'TGL_TARGET', 'DESKRIPSI', 'PEKERJA', 'STATUS_RAW']
+    for col in ff_cols:
+        df[col] = df[col].ffill()
+
+    # --------------------------------------------------
+    # STEP 4 - Konversi tipe data
+    # --------------------------------------------------
+    df['TGL_ORDER']  = pd.to_datetime(df['TGL_ORDER'],  errors='coerce', dayfirst=True)
+    df['TGL_TARGET'] = pd.to_datetime(df['TGL_TARGET'], errors='coerce', dayfirst=True)
+    df['QTY']        = pd.to_numeric(df['QTY'],     errors='coerce').fillna(0)
+    df['PEKERJA']    = pd.to_numeric(df['PEKERJA'], errors='coerce').fillna(0)
+    df['NO_ID']      = df['NO_ID'].astype(str).str.strip()
+
+    # --------------------------------------------------
+    # STEP 5 - Filter baris valid
+    # --------------------------------------------------
+    df = df[~df['NO_ID'].isin(['', 'nan', 'NaN', 'None', 'NO_ID'])]
+    df = df[df['QTY'] > 0]
+    print(f"   Baris valid: {len(df)}")
+
+    # --------------------------------------------------
+    # STEP 6 - Agregasi per pesanan (gabungkan QTY semua ukuran)
+    # --------------------------------------------------
+    df_grouped = df.groupby('NO_ID', sort=False).agg(
+        TGL_ORDER   = ('TGL_ORDER',   'first'),
+        TGL_TARGET  = ('TGL_TARGET',  'first'),
+        DESKRIPSI   = ('DESKRIPSI',   'first'),
+        QTY         = ('QTY',         'sum'),
+        PEKERJA     = ('PEKERJA',     'first'),
+        STATUS_RAW  = ('STATUS_RAW',  'first'),
+    ).reset_index()
+
+    print(f"   Pesanan unik: {len(df_grouped)}")
+
+    # --------------------------------------------------
+    # STEP 7 - Buat kolom output
+    # --------------------------------------------------
+    df_grouped['no_po'] = df_grouped.apply(
+        lambda r: format_no_po(r['NO_ID'], r['TGL_ORDER']), axis=1
+    )
+    df_grouped['tanggal_order']      = df_grouped['TGL_ORDER'].dt.strftime('%d/%m/%Y')
+    df_grouped['target_selesai']     = df_grouped['TGL_TARGET'].dt.strftime('%d/%m/%Y')
+    df_grouped['durasi_target_hari'] = (
+        df_grouped['TGL_TARGET'] - df_grouped['TGL_ORDER']
+    ).dt.days.fillna(0).astype(int)
+    df_grouped['keterangan_barang']  = df_grouped['DESKRIPSI'].apply(kategorikan_barang)
+    df_grouped['qty']                = df_grouped['QTY'].astype(int)
+    df_grouped['pekerja']            = df_grouped['PEKERJA'].astype(int)
+    df_grouped['terlambat']          = df_grouped['STATUS_RAW'].apply(parse_status)
+
+    # Warna: ambil jika kolom tersedia, kalau tidak isi 'Campuran'
+    if 'WARNA' in df.columns:
+        warna_map = df.groupby('NO_ID')['WARNA'].apply(
+            lambda x: x.dropna().iloc[0] if not x.dropna().empty else 'Campuran'
+        )
+        df_grouped['warna'] = df_grouped['NO_ID'].map(warna_map).fillna('Campuran')
+        df_grouped['warna'] = df_grouped['warna'].astype(str).str.strip().str.title()
+    else:
+        df_grouped['warna'] = 'Campuran'
+
+    # --------------------------------------------------
+    # STEP 8 - Susun & simpan
+    # --------------------------------------------------
+    df_final = df_grouped[[
+        'no_po',
+        'tanggal_order',
+        'keterangan_barang',
+        'warna',
+        'qty',
+        'pekerja',
+        'target_selesai',
+        'durasi_target_hari',
+        'terlambat',
+    ]].reset_index(drop=True)
+
+    df_final.to_excel(OUTPUT_FILE, index=False)
+
+    # --------------------------------------------------
+    # STEP 9 - Ringkasan
+    # --------------------------------------------------
+    total = len(df_final)
+    print("\n" + "=" * 60)
+    print("PREPROCESSING SELESAI")
+    print("=" * 60)
+    print(f"\nFile output  : {OUTPUT_FILE}")
+    print(f"Total baris  : {total} pesanan")
+
+    print("\nDistribusi Label Terlambat:")
+    for label, count in df_final['terlambat'].value_counts().sort_index().items():
+        nama = "Tepat Waktu (0)" if label == 0 else "Terlambat   (1)"
+        pct  = count / total * 100
+        print(f"  {nama} : {count:>4} data ({pct:.1f}%)")
+
+    print("\nDistribusi Kategori Barang:")
+    for cat, cnt in df_final['keterangan_barang'].value_counts().items():
+        pct = cnt / total * 100
+        print(f"  {cat:<30} : {cnt:>4} ({pct:.1f}%)")
+
+    print("\nStatistik Numerik:")
+    print(df_final[['qty', 'pekerja', 'durasi_target_hari']].describe().round(2).to_string())
+
+    print("\nSample Output (5 baris pertama):")
+    print(df_final.head(5).to_string(index=False))
+
+    print("\nSiap digunakan untuk training Random Forest!")
+    return df_final
+
+
+if __name__ == '__main__':
+    main()

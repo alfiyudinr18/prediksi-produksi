@@ -174,7 +174,7 @@
                 @endforeach
             </div>
 
-            @php $selisih = $ev['overfitting'] ?? 0; $aman = $selisih <= 10; @endphp
+            {{-- @php $selisih = $ev['overfitting'] ?? 0; $aman = $selisih <= 10; @endphp
             <div class="mt-5 pt-5 border-t border-slate-100 grid sm:grid-cols-3 gap-4 text-sm">
                 <div>
                     <p class="text-xs text-slate-500">Training Accuracy</p>
@@ -195,7 +195,7 @@
                 {{ $aman
                     ? 'Selisih akurasi di bawah 10%, model tidak menunjukkan indikasi overfitting.'
                     : 'Selisih akurasi melebihi 10%, model menunjukkan indikasi overfitting.' }}
-            </div>
+            </div> --}}
         </div>
         @endif
     </div>
@@ -370,7 +370,7 @@
         </p>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    {{-- <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <h3 class="text-lg font-semibold text-slate-800">Cross Validation 5-Fold</h3>
         <p class="text-xs text-slate-500 mt-1 mb-5">Uji kestabilan model pada seluruh dataset</p>
 
@@ -396,7 +396,7 @@
         @else
         <p class="text-sm text-slate-500">Data validasi silang belum tersedia.</p>
         @endif
-    </div>
+    </div> --}}
 </div>
 
 @endif
